@@ -7,7 +7,14 @@
     "start": "node main.js",
     "dev": "nodemon main.js"
   },
-  "keywords": [],
+  "keywords": [
+    "telegram-bot",
+    "duckydex",
+    "manga",
+    "anime",
+    "mangalist",
+    "mangadex"
+  ],
   "author": "Samir Thakuri",
   "license": "ISC",
   "type": "commonjs",

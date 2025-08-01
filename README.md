@@ -1,132 +1,263 @@
-# DuckDex Manga Telegram Bot
+# 🦆 DuckDex Bot - Ultimate Manga Telegram Bot
 
-A Telegram bot for searching and browsing manga using the `api.samirb.com.np` API.
+<div align="center">
+  <img src="https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js">
+  <img src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram">
+  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript">
+  <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="License">
+</div>
 
-## Features
 
-✅ **Search for manga** - Users can search for manga by title  
-✅ **View manga details** - Shows title, author, status, genres, rating, and summary with cover image  
-✅ **Browse chapters** - Navigate through available chapters with pagination  
-✅ **Auto-search** - Just send any text (non-command) to search  
-✅ **Inline keyboards** - Interactive buttons for navigation  
-✅ **Pagination** - Handle large search results and chapter lists  
-✅ **Image proxy** - Properly load manga cover images through the API  
+<div align="center">
+  <a href="https://duckydex.samirb.com.np">
+    <img src="icon.png" alt="Icon" width="150" height="150"><br>
+    <caption>Visit DuckDex Online🔗</caption>
+    <br>
+  </a>
+  <h3>🚀 Your Ultimate Manga Companion on Telegram</h3>
+  <p>Search, browse, and download manga with an intuitive and feature-rich Telegram bot</p>
+</div>
 
-## Commands
+---
 
-- `/start` - Welcome message and introduction
-- `/help` - Show available commands
-- `/search <query>` - Search for manga by title
-- `/details <manga_id>` - Get detailed information about a specific manga
-- `/trending` - Show trending manga (placeholder)
-- `/random` - Get a random manga suggestion
+## 🌟 Features
 
-## Usage Examples
+### 🔍 **Search & Discovery**
+- **🔎 Smart Search** - Find any manga instantly with intelligent search
+- **🔥 Latest Updates** - Stay updated with the newest manga releases
+- **📊 Category Browsing** - Explore manga by categories (Latest, Hot, New, Completed)
+- **🎨 Genre Filtering** - Discover manga by your favorite genres
+- **🎯 Auto-Search** - Just type a manga name without commands
 
-1. **Search for manga:**
+### 📚 **Manga Information**
+- **📖 Detailed Info** - Comprehensive manga details with cover images
+- **📃 Chapter Lists** - Browse all available chapters with pagination
+- **⭐ Ratings & Stats** - View ratings, status, and popularity metrics
+- **🏷️ Genre Tags** - See all genres and categories
+
+### 💾 **Downloads & Export**
+- **📄 PDF Generation** - Download any chapter as a high-quality PDF
+- **🖼️ Image Optimization** - Properly formatted images and layouts
+- **📱 Mobile Friendly** - Optimized for mobile reading
+
+### 🎛️ **User Experience**
+- **🎨 Interactive Buttons** - Intuitive inline keyboard navigation
+- **📄 Pagination** - Smooth browsing through large result sets
+- **⚡ Auto-Deletion** - Smart message cleanup to reduce chat spam
+- **🔄 Loading States** - Real-time feedback during operations
+- **🛡️ Error Handling** - Robust error recovery with retry options
+- **👥 Group Support** - Works seamlessly in both private chats and groups
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 16+ installed
+- Telegram Bot Token (from [@BotFather](https://t.me/botfather))
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/notsopreety/duckydex-bot.git
+   cd duckydex-bot
    ```
-   /search Naruto
-   ```
-   or just send:
-   ```
-   Naruto
-   ```
 
-2. **Get manga details:**
-   ```
-   /details lookism
-   ```
-
-3. **Get random manga:**
-   ```
-   /random
-   ```
-
-## Architecture
-
-### Files Structure
-```
-├── main.js                 # Main bot logic and command handlers
-├── utils/
-│   ├── search.js          # Search functionality and result formatting
-│   ├── details.js         # Manga details retrieval and formatting
-│   ├── chapters.js        # Chapter navigation and keyboard creation
-│   └── pagination.js      # Pagination utilities and caching
-├── package.json           # Dependencies and scripts
-└── .env.local            # Bot token configuration
-```
-
-### API Integration
-
-The bot integrates with `https://api.samirb.com.np/manga/` endpoints:
-
-- **Search**: `GET /manga/search?q={query}`
-- **Details**: `GET /manga/details/{id}`  
-- **Image Proxy**: `GET /manga/img?url={encodedUrl}`
-
-### Key Features Implementation
-
-#### Search Results
-- Shows up to 10 results per page
-- Each result displays: title, author, updated date, views
-- Numbered buttons (1, 2, 3...) for each manga
-- Pagination controls for large result sets
-- Results cached for pagination navigation
-
-#### Manga Details
-- Shows cover image using the image proxy API
-- Displays comprehensive manga information
-- Interactive chapter selection with 4 chapters per row
-- 20 chapters per page with pagination
-- Back navigation to return to details
-
-#### Chapter Navigation  
-- Chapters organized in a grid layout (4 per row)
-- Pagination for manga with many chapters
-- Chapter buttons show "Ch. X" format
-- Back button to return to manga details
-
-#### Caching System
-- In-memory storage for search results (1 hour TTL)
-- Automatic cleanup of old cached data
-- Supports pagination without re-querying API
-
-## Installation
-
-1. Clone the repository
-2. Install dependencies:
+2. **Install dependencies**
    ```bash
    npm install
    ```
-3. Create `.env.local` file with your bot token:
-   ```
-   TELEGRAM_BOT_TOKEN=your_bot_token_here
-   ```
-4. Start the bot:
+
+3. **Configure environment**
    ```bash
+   # Create .env or .env.local file
+   echo "BOT_TOKEN=your_telegram_bot_token_here" > .env.local
+   ```
+
+4. **Start the bot**
+   ```bash
+   # Development mode with auto-restart
+   npm run dev
+   
+   # Production mode
    npm start
    ```
 
-## Development
+---
 
-For development with auto-restart:
-```bash
-npm run dev
+## 🎮 Commands & Usage
+
+### 📋 **Basic Commands**
+| Command | Description | Example |
+|---------|-------------|----------|
+| `/start` | Welcome message with quick actions | `/start` |
+| `/help` | Comprehensive command guide | `/help` |
+| `/search <query>` | Search for manga by title | `/search Naruto` |
+| `/details <manga_id>` | Get detailed manga information | `/details lookism` |
+| `/chapters <manga_id>` | List all chapters with details | `/chapters one-piece` |
+
+### 🗂️ **Browse Commands**
+| Command | Description | Example |
+|---------|-------------|----------|
+| `/latest` | Show latest manga updates | `/latest` |
+| `/mangalist [category]` | Browse by categories | `/mangalist hot-manga` |
+| `/genre [genre]` | Explore by genres | `/genre action` |
+
+### 📥 **Download Commands**
+| Command | Description | Example |
+|---------|-------------|----------|
+| `/pdf <chapter_id>` | Download chapter as PDF | `/pdf naruto-chapter-1` |
+
+### 💡 **Pro Tips**
+- **Quick Search**: Just type a manga name without any command!
+- **Interactive Navigation**: Use buttons for easier browsing
+- **Group Usage**: Mention the bot `@yourbotname` in groups
+- **Direct Access**: Use commands with parameters for direct access
+
+---
+
+## 🏗️ Architecture
+
+### 📁 **Project Structure**
+```
+duckydex-bot/
+├── 📄 main.js                 # Main bot logic and command handlers
+├── 📁 utils/                  # Utility modules
+│   ├── 📃 chapterList.js      # Chapter list handling
+│   ├── 📃 chapters.js        # Chapter management
+│   ├── 🗑️ deletion.js        # Auto-deletion system
+│   ├── 📖 details.js         # Manga details handling
+│   ├── 🎨 genre.js           # Genre filtering
+│   ├── 📊 latest.js          # Latest updates
+│   ├── 📊 mangalist.js       # Category browsing
+│   ├── 📟 pagination.js      # Pagination handling
+│   ├── 📄 pdf.js             # PDF generation
+│   └── 🔍 search.js          # Search functionality
+├── 📋 package.json           # Dependencies and scripts
+├── 🔧 .env/.env.local        # Environment configuration
+└── 📚 README.md              # This file
 ```
 
-## Dependencies
+### 🔧 **Core Technologies**
+- **Runtime**: Node.js 16+
+- **Bot Framework**: node-telegram-bot-api
+- **HTTP Client**: Axios
+- **PDF Generation**: pdf-lib
+- **Image Processing**: Sharp
+- **Logging**: Winston
+- **Environment**: dotenv
 
-- `node-telegram-bot-api` - Telegram Bot API wrapper
-- `axios` - HTTP client for API requests  
-- `dotenv` - Environment variable management
-- `nodemon` - Development auto-restart (dev dependency)
+---
 
-## Future Enhancements
+## 🎨 **Key Features Showcase**
 
-- [ ] Chapter reading functionality
-- [ ] Real trending manga API integration  
-- [ ] User favorites system
-- [ ] Reading progress tracking
-- [ ] Better image handling and caching
-- [ ] Database integration for persistent storage
-- [ ] Advanced search filters (genre, status, etc.)
+### 🔍 **Smart Search System**
+- Instant search results with pagination
+- Auto-complete suggestions
+- Typo-tolerant search
+- Category and genre filtering
+
+### 📱 **Interactive UI**
+- Beautiful inline keyboards
+- Smooth navigation flow
+- Loading states and progress indicators
+- Error handling with retry options
+
+### 🧹 **Smart Message Management**
+- Auto-deletion of temporary messages
+- Reduced chat spam
+- Efficient message editing
+- Batch cleanup operations
+
+### 📊 **Advanced Browsing**
+- Category-based exploration
+- Genre-specific filtering
+- Latest updates tracking
+- Popularity-based sorting
+
+---
+
+## 🛠️ **Development**
+
+### 🔧 **Available Scripts**
+```bash
+# Start development server with auto-reload
+npm run dev
+
+# Start production server
+npm start
+
+# Install dependencies
+npm install
+```
+
+### 📝 **Environment Variables**
+```bash
+# Required
+BOT_TOKEN=your_telegram_bot_token
+
+# Optional
+NODE_ENV=production
+LOG_LEVEL=info
+```
+
+### 🐛 **Debugging**
+- Logs are written to `combined.log` and `error.log`
+- Use `npm run dev` for development with auto-restart
+- Check console output for real-time debugging
+
+---
+
+## 📈 **Performance Features**
+
+- **⚡ Fast Response Times** - Optimized API calls and caching
+- **🔄 Auto-Retry Logic** - Automatic retry for failed operations
+- **📊 Efficient Pagination** - Smart loading of large datasets
+- **🗑️ Memory Management** - Auto-cleanup of old data and messages
+- **📱 Mobile Optimized** - Responsive design for all devices
+
+---
+
+## 🔮 **Upcoming Features (Only When I am in mood to add them 🤣)**
+- [ ] User Personalized Settings
+- [ ] AI Suggestion Integration
+- [ ] Activity Tracking
+- [ ] Personalized Latest Updates Notification
+- [ ] ... and many more
+
+## 🤝 **Contributing**
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 **License**
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 👨‍💻 **Author**
+
+**Samir Thakuri**
+- GitHub: [@notsopreety](https://github.com/notsopreety)
+- Telegram: [@samirxyz](https://t.me/samirxyz)
+
+---
+
+## 🙏 **Acknowledgments**
+
+- [Telegram Bot API](https://core.telegram.org/bots/api) for the excellent bot platform
+- All contributors and users who help improve this bot
+
+---
+
+<div align="center">
+  <h3>🌟 If you found this project helpful, please give it a star! ⭐</h3>
+  <p>Made with ❤️ for the manga community</p>
+</div>
