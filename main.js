@@ -13,6 +13,8 @@ const { fetchLatest, createLatestMessage } = require('./utils/latest');
 const { createChapterPDF, cleanupTempFiles } = require('./utils/pdf');
 const { fetchMangaList, createCategorySelectionMessage, createMangaListMessage, getCategoryDisplayName, isValidCategory } = require('./utils/mangalist');
 const { fetchGenres, fetchMangaByGenre, createGenreSelectionMessage, createGenreMangaListMessage, getGenreDisplayName, isValidGenre } = require('./utils/genre');
+const { runSpeedTest, formatSpeedTestResults } = require('./utils/speedtest');
+const { checkLatency, formatPingResults } = require('./utils/ping');
 const { 
   sendMessageWithAutoDeletion, 
   sendPhotoWithAutoDeletion, 
@@ -100,6 +102,10 @@ ${isGroup ? `🏢 **Group Usage:** Mention me with @${botUsername} or reply to m
         { text: '🎨 Browse Genres', callback_data: 'genre_back' }
       ],
       [
+        { text: '🚀 Speed Test', callback_data: 'speedtest' },
+        { text: '🏓 Ping Test', callback_data: 'ping' }
+      ],
+      [
         { text: '❓ Help & Commands', callback_data: 'show_help' }
       ]
     ]
@@ -141,6 +147,8 @@ bot.onText(/\/help(@\w+)?/, async (msg, match) => {
 🎆 **General:**
 • \`/start\` - Welcome message with quick actions
 • \`/help\` - Show this comprehensive guide
+• \`/speedtest\` - Test Bot's machine internet speed
+• \`/ping\` - Test Bot's response latency
 
 ${isGroup ? `🏢 **Group Usage:**\nMention me with @${botUsername} or reply to my messages\n\n` : ''}💡 **Pro Tips:**
 • Just type a manga name to search instantly!
@@ -176,6 +184,38 @@ ${isGroup ? `🏢 **Group Usage:**\nMention me with @${botUsername} or reply to 
   logger.info('Sent help message', { chatId, chatType: msg.chat.type });
 });
 
+
+// Speed Test command
+bot.onText(/\/speedtest(@\w+)?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const botUsername = await getBotUsername();
+  if (isGroupChat(msg) && match[1] && match[1] !== `@${botUsername}`) return;
+
+  logger.info('Running speed test', { chatId });
+  const loadingMsg = await sendMessageWithAutoDeletion(
+    bot, 
+    chatId, 
+    '🚀 Running speed test...', 
+    {}, 
+    DELETION_TIMEOUTS.LOADING_MESSAGE
+  );
+
+  try {
+    const results = await runSpeedTest();
+    const formattedResults = formatSpeedTestResults(results);
+    await safeEditOrSend(bot, chatId, loadingMsg.message_id, {
+      text: formattedResults,
+      parse_mode: 'Markdown'
+    }, false, DELETION_TIMEOUTS.USER_INTERACTION);
+    logger.info('Sent speed test results', { chatId });
+  } catch (error) {
+    logger.error('Failed to run speed test', { chatId, error: error.message });
+    await safeEditOrSend(bot, chatId, loadingMsg.message_id, {
+      text: '❌ Failed to run speed test. Please try again later.',
+      parse_mode: 'Markdown'
+    }, false, DELETION_TIMEOUTS.ERROR_MESSAGE);
+  }
+});
 // latest command
 bot.onText(/\/latest(@\w+)?/, async (msg, match) => {
   const chatId = msg.chat.id;
@@ -1399,40 +1439,95 @@ ${details.summary}
       }
     }, false, DELETION_TIMEOUTS.USER_INTERACTION);
     
+  }
+  else if (data === 'speedtest') {
+    logger.info('Speed test callback triggered', { chatId });
+    await handleCallbackWithLoading(
+      bot,
+      callbackQuery,
+      async () => {
+        const results = await runSpeedTest();
+        const formattedResults = formatSpeedTestResults(results);
+        const keyboard = {
+          inline_keyboard: [
+            [
+              { text: '🔁 Test Again', callback_data: 'speedtest' },
+              { text: '🏠 Back to Start', callback_data: 'back_to_start' }
+            ]
+          ]
+        };
+        await safeEditOrSend(bot, chatId, callbackQuery.message.message_id, {
+          text: formattedResults,
+          parse_mode: 'Markdown',
+          reply_markup: keyboard
+        }, false, DELETION_TIMEOUTS.USER_INTERACTION);
+      },
+      '🚀 Running speed test...',
+      DELETION_TIMEOUTS.LOADING_MESSAGE
+    );
+  
+  } else if (data === 'ping') {
+    logger.info('Ping test callback triggered', { chatId });
+    await handleCallbackWithLoading(
+      bot,
+      callbackQuery,
+      async () => {
+        const results = await checkLatency();
+        const formattedResults = formatPingResults(results);
+        const keyboard = {
+          inline_keyboard: [
+            [
+              { text: '🔁 Test Again', callback_data: 'ping' },
+              { text: '🏠 Back to Start', callback_data: 'back_to_start' }
+            ]
+          ]
+        };
+        await safeEditOrSend(bot, chatId, callbackQuery.message.message_id, {
+          text: formattedResults,
+          parse_mode: 'Markdown',
+          reply_markup: keyboard
+        }, false, DELETION_TIMEOUTS.USER_INTERACTION);
+      },
+      '🏓 Running ping test...',
+      DELETION_TIMEOUTS.LOADING_MESSAGE
+    );
+  
   } else if (data === 'show_help') {
     logger.info('Show help callback triggered', { chatId });
     const botUsername = await getBotUsername();
     const isGroup = isGroupChat({ chat: { id: chatId } });
-    
+  
     const helpMessage = `
-🤖✨ **DuckDex Bot - Command Guide** ✨🤖
-
-🔍 **Search & Discovery:**
-• \`/search <query>\` - Search for any manga
-• \`/latest\` - Browse latest manga updates
-• \`/mangalist [category]\` - Browse by categories
-• \`/genre [genre]\` - Explore by genres
-
-📖 **Manga Information:**
-• \`/details <manga_id>\` - Get detailed manga info
-• \`/chapters <manga_id>\` - List all chapters
-
-📄 **Downloads:**
-• \`/pdf <chapter_id>\` - Download chapter as PDF
-
-🎆 **General:**
-• \`/start\` - Welcome message with quick actions
-• \`/help\` - Show this comprehensive guide
-
-${isGroup ? `🏢 **Group Usage:**\nMention me with @${botUsername} or reply to my messages\n\n` : ''}💡 **Pro Tips:**
-• Just type a manga name to search instantly!
-• Use buttons for easier navigation
-• Commands work in both private and group chats
-• All results include interactive buttons
-
-🚀 **Ready to explore manga? Try any command above!**
+  🤖✨ **DuckDex Bot - Command Guide** ✨🤖
+  
+  🔍 **Search & Discovery:**
+  • \`/search <query>\` - Search for any manga
+  • \`/latest\` - Browse latest manga updates
+  • \`/mangalist [category]\` - Browse by categories
+  • \`/genre [genre]\` - Explore by genres
+  
+  📖 **Manga Information:**
+  • \`/details <manga_id>\` - Get detailed manga info
+  • \`/chapters <manga_id>\` - List all chapters
+  
+  📄 **Downloads:**
+  • \`/pdf <chapter_id>\` - Download chapter as PDF
+  
+  🎆 **General:**
+  • \`/start\` - Welcome message with quick actions
+  • \`/help\` - Show this comprehensive guide
+  • \`/speedtest\` - Test Bot's machine internet speed
+  • \`/ping\` - Test Bot's response latency
+  
+  ${isGroup ? `🏢 **Group Usage:**\nMention me with @${botUsername} or reply to my messages\n\n` : ''}💡 **Pro Tips:**
+  • Just type a manga name to search instantly!
+  • Use buttons for easier navigation
+  • Commands work in both private and group chats
+  • All results include interactive buttons
+  
+  🚀 **Ready to explore manga? Try any command above!**
     `;
-    
+  
     const keyboard = {
       inline_keyboard: [
         [
@@ -1448,14 +1543,14 @@ ${isGroup ? `🏢 **Group Usage:**\nMention me with @${botUsername} or reply to 
         ]
       ]
     };
-    
+  
     await safeEditOrSend(bot, chatId, callbackQuery.message.message_id, {
       text: helpMessage,
       reply_markup: keyboard,
       parse_mode: 'Markdown'
     }, false, DELETION_TIMEOUTS.USER_INTERACTION);
-    
-  } else if (data === 'back_to_start') {
+  }
+  else if (data === 'back_to_start') {
     logger.info('Back to start callback triggered', { chatId });
     const botUsername = await getBotUsername();
     const isGroup = isGroupChat({ chat: { id: chatId } });
@@ -1488,6 +1583,10 @@ ${isGroup ? `🏢 **Group Usage:** Mention me with @${botUsername} or reply to m
         [
           { text: '📊 Browse Categories', callback_data: 'mangalist_categories' },
           { text: '🎨 Browse Genres', callback_data: 'genre_back' }
+        ],
+        [
+          { text: '🚀 Speed Test', callback_data: 'speedtest' },
+          { text: '🏓 Ping Test', callback_data: 'ping' }
         ],
         [
           { text: '❓ Help & Commands', callback_data: 'show_help' }
