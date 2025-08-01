@@ -1,8 +1,8 @@
 {
   "name": "duckydex-bot",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Telegram bot for DuckDex",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
     "start": "node main.js",
     "dev": "nodemon main.js"
