@@ -1,13 +1,13 @@
 const winston = require('winston');
 
-// Configure logger for enhancements
+// Configure logger
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.json()
   ),
-  defaultMeta: { service: 'bot-enhancements' },
+  defaultMeta: { service: 'bot-deletion' },
   transports: [
     new winston.transports.File({ filename: 'error.log', level: 'error' }),
     new winston.transports.File({ filename: 'combined.log' }),
@@ -19,7 +19,7 @@ const logger = winston.createLogger({
 const messagesToDelete = new Map();
 
 /**
- * Enhanced message sender with auto-deletion
+ * Message sender with auto-deletion
  * @param {Object} bot - Telegram bot instance
  * @param {number} chatId - Chat ID
  * @param {string|Object} content - Message content or options
@@ -60,7 +60,7 @@ async function sendMessageWithAutoDeletion(bot, chatId, content, options = {}, d
 }
 
 /**
- * Enhanced photo sender with auto-deletion
+ * Photo sender with auto-deletion
  * @param {Object} bot - Telegram bot instance
  * @param {number} chatId - Chat ID
  * @param {string} photo - Photo URL or buffer
@@ -91,7 +91,7 @@ async function sendPhotoWithAutoDeletion(bot, chatId, photo, options = {}, delet
 }
 
 /**
- * Enhanced safe edit or send with better error handling
+ * Safe edit or send with better error handling
  * @param {Object} bot - Telegram bot instance
  * @param {number} chatId - Chat ID
  * @param {number} messageId - Message ID to edit
@@ -100,9 +100,12 @@ async function sendPhotoWithAutoDeletion(bot, chatId, photo, options = {}, delet
  * @param {number} deleteAfter - Delete after milliseconds (default: 0 = no deletion)
  * @returns {Promise<Object>} - Result message
  */
-async function enhancedSafeEditOrSend(bot, chatId, messageId, messageOptions, isPhoto = false, deleteAfter = 0) {
+async function safeEditOrSend(bot, chatId, messageId, messageOptions, isPhoto = false, deleteAfter = 0) {
   try {
     let resultMessage;
+    
+    // Cancel any existing deletion schedule for this message
+    cancelMessageDeletion(chatId, messageId);
     
     if (isPhoto && messageOptions.photo) {
       await bot.editMessageCaption(messageOptions.caption || messageOptions.text, {
@@ -154,6 +157,9 @@ async function enhancedSafeEditOrSend(bot, chatId, messageId, messageOptions, is
  * @param {number} deleteAfter - Delete after milliseconds
  */
 function scheduleMessageDeletion(bot, chatId, messageId, deleteAfter) {
+  // Cancel any existing deletion schedule
+  cancelMessageDeletion(chatId, messageId);
+  
   const timeoutId = setTimeout(async () => {
     try {
       await bot.deleteMessage(chatId, messageId);
@@ -186,7 +192,7 @@ function cancelMessageDeletion(chatId, messageId) {
 }
 
 /**
- * Enhanced callback query handler with better error handling and loading states
+ * Callback query handler with better error handling and loading states
  * @param {Object} bot - Telegram bot instance
  * @param {Object} callbackQuery - Callback query object
  * @param {Function} handler - Handler function
@@ -199,11 +205,8 @@ async function handleCallbackWithLoading(bot, callbackQuery, handler, loadingTex
   const data = callbackQuery.data;
   
   try {
-    // Answer callback query immediately
-    await bot.answerCallbackQuery(callbackQuery.id);
-    
     // Show loading state
-    const loadingMessage = await enhancedSafeEditOrSend(
+    const loadingMessage = await safeEditOrSend(
       bot, 
       chatId, 
       msg.message_id, 
@@ -215,12 +218,15 @@ async function handleCallbackWithLoading(bot, callbackQuery, handler, loadingTex
     // Execute the handler
     const result = await handler(bot, callbackQuery, loadingMessage);
     
+    // Cancel deletion of the loading message if it was replaced
+    cancelMessageDeletion(chatId, loadingMessage.message_id);
+    
     return result;
   } catch (error) {
     logger.error('Callback handler failed', { chatId, data, error: error.message });
     
     // Show error message
-    await enhancedSafeEditOrSend(
+    await safeEditOrSend(
       bot,
       chatId,
       msg.message_id,
@@ -250,6 +256,7 @@ async function batchDeleteMessages(bot, chatId, messageIds) {
     try {
       await bot.deleteMessage(chatId, messageId);
       logger.info('Deleted message in batch', { chatId, messageId });
+      cancelMessageDeletion(chatId, messageId);
     } catch (error) {
       logger.warn('Failed to delete message in batch', { chatId, messageId, error: error.message });
     }
@@ -287,19 +294,19 @@ setInterval(cleanupScheduledDeletions, 3600000);
  */
 const DELETION_TIMEOUTS = {
   ERROR_MESSAGE: 30000,      // 30 seconds
-  SUCCESS_MESSAGE: 10000,    // 10 seconds
+  SUCCESS_MESSAGE: 1800000,  // 30 minutes auto-deletion for success messages
   LOADING_MESSAGE: 5000,     // 5 seconds
   TEMPORARY_INFO: 15000,     // 15 seconds
-  USER_INTERACTION: 0,       // No auto-deletion for user interactions
-  SEARCH_RESULTS: 0,         // No auto-deletion for search results
-  MANGA_DETAILS: 0,          // No auto-deletion for manga details
-  CHAPTER_LIST: 0            // No auto-deletion for chapter lists
+  USER_INTERACTION: 1800000, // 30 minutes auto-deletion for user interactions
+  SEARCH_RESULTS: 1800000,   // 30 minutes auto-deletion for search results
+  MANGA_DETAILS: 1800000,    // 30 minutes auto-deletion for manga details
+  CHAPTER_LIST: 1800000       // 30 minutes auto-deletion for chapter lists
 };
 
 module.exports = {
   sendMessageWithAutoDeletion,
   sendPhotoWithAutoDeletion,
-  enhancedSafeEditOrSend,
+  safeEditOrSend,
   scheduleMessageDeletion,
   cancelMessageDeletion,
   handleCallbackWithLoading,

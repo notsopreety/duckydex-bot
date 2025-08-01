@@ -1,6 +1,6 @@
 {
   "name": "duckydex-bot",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Telegram bot for DuckDex",
   "main": "main.js",
   "scripts": {
