@@ -169,6 +169,14 @@ function createGenreMangaListMessage(data, genre, genreDisplayName, currentPage)
   // Add pagination buttons
   const paginationRow = [];
   
+  // Add first button if not on first page and more than 2 pages away
+  if (data.currentPage > 2) {
+    paginationRow.push({
+      text: '⏮️ First',
+      callback_data: `genre_${genre}_1`
+    });
+  }
+  
   if (data.currentPage > 1) {
     paginationRow.push({
       text: '⬅️ Previous',
@@ -185,6 +193,14 @@ function createGenreMangaListMessage(data, genre, genreDisplayName, currentPage)
     paginationRow.push({
       text: 'Next ➡️',
       callback_data: `genre_${genre}_${data.currentPage + 1}`
+    });
+  }
+  
+  // Add last button if not on last page and more than 2 pages away
+  if (data.currentPage < data.totalPages - 1) {
+    paginationRow.push({
+      text: 'Last ⏭️',
+      callback_data: `genre_${genre}_${data.totalPages}`
     });
   }
   

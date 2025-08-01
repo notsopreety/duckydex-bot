@@ -72,7 +72,7 @@
 3. **Configure environment**
    ```bash
    # Create .env or .env.local file
-   echo "BOT_TOKEN=your_telegram_bot_token_here" > .env.local
+   echo "TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here" > .env.local
    ```
 
 4. **Start the bot**
@@ -195,7 +195,7 @@ npm install
 ### 📝 **Environment Variables**
 ```bash
 # Required
-BOT_TOKEN=your_telegram_bot_token
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 
 # Optional
 NODE_ENV=production

@@ -368,6 +368,170 @@ bot.onText(/\/chapters(@\w+)?\s+(.+)/, async (msg, match) => {
   }
 });
 
+// Start command
+bot.onText(/\/start(@\w+)?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const botUsername = await getBotUsername();
+  if (isGroupChat(msg) && match[1] && match[1] !== `@${botUsername}`) return;
+
+  const userName = msg.from.first_name || 'Friend';
+  const isGroup = isGroupChat(msg);
+  
+  logger.info('Sent enhanced start message', { chatId, userName, chatType: isGroup ? 'group' : 'private' });
+  
+  const welcomeMessage = `
+🦆✨ **Welcome to DuckDex Bot, ${userName}!** ✨🦆
+
+🎯 **Your Ultimate Manga Companion**
+
+🌟 **What I can do for you:**
+📚 **Search** - Find any manga instantly
+📖 **Details** - Get comprehensive manga info
+📃 **Chapters** - Browse all available chapters
+🔥 **Latest** - Stay updated with new releases
+📊 **Categories** - Explore by manga types
+🎨 **Genres** - Discover by your favorite genres
+📄 **PDF Export** - Download chapters as PDF
+
+${isGroup ? `🏢 **Group Usage:** Mention me with @${botUsername} or reply to my messages\n` : ''}💡 **Quick Start:** Just type a manga name or use /help for all commands!
+
+🚀 **Ready to dive into the world of manga?**
+  `;
+  
+  const keyboard = {
+    inline_keyboard: [
+      [
+        { text: '🔍 Search Manga', callback_data: 'quick_search' },
+        { text: '🔥 Latest Updates', callback_data: 'latest_manga' }
+      ],
+      [
+        { text: '📊 Browse Categories', callback_data: 'mangalist_categories' },
+        { text: '🎨 Browse Genres', callback_data: 'genre_back' }
+      ],
+      [
+        { text: '❓ Help & Commands', callback_data: 'show_help' }
+      ]
+    ]
+  };
+  
+  await sendMessageWithAutoDeletion(bot, chatId, {
+    text: welcomeMessage,
+    reply_markup: keyboard,
+    parse_mode: 'Markdown'
+  }, {}, DELETION_TIMEOUTS.USER_INTERACTION);
+});
+
+// Help command
+bot.onText(/\/help(@\w+)?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const botUsername = await getBotUsername();
+  if (isGroupChat(msg) && match[1] && match[1] !== `@${botUsername}`) return;
+
+  const isGroup = isGroupChat(msg);
+  
+  logger.info('Sent enhanced help message', { chatId, chatType: isGroup ? 'group' : 'private' });
+  
+  const helpMessage = `
+🤖✨ **DuckDex Bot - Command Guide** ✨🤖
+
+🔍 **Search & Discovery:**
+• \`/search <query>\` - Search for any manga
+• \`/latest\` - Browse latest manga updates
+• \`/mangalist [category]\` - Browse by categories
+• \`/genre [genre]\` - Explore by genres
+
+📖 **Manga Information:**
+• \`/details <manga_id>\` - Get detailed manga info
+• \`/chapters <manga_id>\` - List all chapters
+
+📄 **Downloads:**
+• \`/pdf <chapter_id>\` - Download chapter as PDF
+
+🎆 **General:**
+• \`/start\` - Welcome message with quick actions
+• \`/help\` - Show this comprehensive guide
+
+${isGroup ? `🏢 **Group Usage:**\nMention me with @${botUsername} or reply to my messages\n\n` : ''}💡 **Pro Tips:**
+• Just type a manga name to search instantly!
+• Use buttons for easier navigation
+• Commands work in both private and group chats
+• All results include interactive buttons
+
+🚀 **Ready to explore manga? Try any command above!**
+  `;
+  
+  const keyboard = {
+    inline_keyboard: [
+      [
+        { text: '🔍 Quick Search', callback_data: 'quick_search' },
+        { text: '🔥 Latest Manga', callback_data: 'latest_manga' }
+      ],
+      [
+        { text: '📊 Categories', callback_data: 'mangalist_categories' },
+        { text: '🎨 Genres', callback_data: 'genre_back' }
+      ],
+      [
+        { text: '🏠 Back to Start', callback_data: 'back_to_start' }
+      ]
+    ]
+  };
+  
+  await sendMessageWithAutoDeletion(bot, chatId, {
+    text: helpMessage,
+    reply_markup: keyboard,
+    parse_mode: 'Markdown'
+  }, {}, DELETION_TIMEOUTS.USER_INTERACTION);
+});
+
+// Latest command
+bot.onText(/\/latest(@\w+)?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const botUsername = await getBotUsername();
+  if (isGroupChat(msg) && match[1] && match[1] !== `@${botUsername}`) return;
+
+  logger.info('Fetching latest releases', { chatId });
+  const loadingMsg = await sendMessageWithAutoDeletion(
+    bot, 
+    chatId, 
+    '🆕 Loading latest releases...', 
+    {}, 
+    DELETION_TIMEOUTS.LOADING_MESSAGE
+  );
+  logger.info('Sent loading message for latest', { chatId, messageId: loadingMsg.message_id });
+
+  try {
+    const latestList = await fetchLatest();
+    storeLatestResults(chatId, latestList);
+    logger.info('Stored latest results', { chatId, resultCount: latestList.length });
+
+    const messageOptions = createLatestMessage(latestList, 0);
+    
+    try {
+      await bot.deleteMessage(chatId, loadingMsg.message_id);
+      logger.info('Deleted loading message', { chatId, messageId: loadingMsg.message_id });
+    } catch (e) {
+      logger.warn('Could not delete loading message', { chatId, error: e.message });
+    }
+    
+    await bot.sendMessage(chatId, messageOptions.text, {
+      reply_markup: messageOptions.reply_markup,
+      parse_mode: messageOptions.parse_mode
+    });
+    logger.info('Sent latest releases', { chatId });
+  } catch (error) {
+    logger.error('Latest fetch failed', { chatId, error: error.message });
+    await enhancedSafeEditOrSend(bot, chatId, loadingMsg.message_id, {
+      text: '❌ Failed to fetch latest releases. Please try again later.',
+      reply_markup: {
+        inline_keyboard: [[{
+          text: '🔄 Try Again',
+          callback_data: 'refresh_latest'
+        }]]
+      }
+    }, false, DELETION_TIMEOUTS.ERROR_MESSAGE);
+  }
+});
+
 // Handle regular text messages (auto-search)
 bot.on('message', async (msg) => {
   const text = msg.text;
@@ -468,24 +632,24 @@ bot.on('callback_query', async (callbackQuery) => {
       bot,
       callbackQuery,
       async (bot, callbackQuery) => {
-        const latestData = await fetchLatestManga(page);
-        if (latestData) {
-          const messageOptions = createLatestMangaMessage(latestData, page);
-          await enhancedSafeEditOrSend(bot, chatId, callbackQuery.message.message_id, messageOptions, false, DELETION_TIMEOUTS.MANGA_DETAILS);
-          logger.info('Updated latest manga page', { chatId, page });
+        const latestList = getStoredLatestResults(chatId);
+        if (latestList) {
+          const messageOptions = createLatestMessage(latestList, page);
+          await enhancedSafeEditOrSend(bot, chatId, callbackQuery.message.message_id, messageOptions, false, DELETION_TIMEOUTS.USER_INTERACTION);
+          logger.info('Updated latest releases page', { chatId, page });
         } else {
           await enhancedSafeEditOrSend(bot, chatId, callbackQuery.message.message_id, {
-            text: '❌ Failed to fetch latest manga. Please try again.',
+            text: '❌ Latest releases data not found. Please use /latest command again.',
             reply_markup: {
               inline_keyboard: [[{
-                text: '🔄 Retry',
-                callback_data: data
+                text: '🆕 Get Latest',
+                callback_data: 'refresh_latest'
               }]]
             }
           }, false, DELETION_TIMEOUTS.ERROR_MESSAGE);
         }
       },
-      `🔥 Loading latest manga page ${page}...`,
+      `🆕 Loading latest releases page ${page}...`,
       DELETION_TIMEOUTS.LOADING_MESSAGE
     );
 
@@ -905,10 +1069,50 @@ ${details.summary}
   } else if (data === 'page_info') {
     logger.debug('Ignored page_info callback', { chatId });
     
+  } else if (data === 'latest_manga') {
+    // Latest manga callback from start/help menu
+    logger.info('Latest manga callback triggered', { chatId });
+    
+    await handleCallbackWithLoading(
+      bot,
+      callbackQuery,
+      async (bot, callbackQuery) => {
+        const latestList = await fetchLatest();
+        storeLatestResults(chatId, latestList);
+        logger.info('Fetched latest results via callback', { chatId, resultCount: latestList.length });
+        
+        const messageOptions = createLatestMessage(latestList, 0);
+        await enhancedSafeEditOrSend(bot, chatId, callbackQuery.message.message_id, messageOptions, false, DELETION_TIMEOUTS.USER_INTERACTION);
+        logger.info('Updated to latest releases via callback', { chatId });
+      },
+      '🆕 Loading latest releases...',
+      DELETION_TIMEOUTS.LOADING_MESSAGE
+    );
+    
+  } else if (data === 'refresh_latest') {
+    // Refresh latest releases
+    logger.info('Refreshing latest releases', { chatId });
+    
+    await handleCallbackWithLoading(
+      bot,
+      callbackQuery,
+      async (bot, callbackQuery) => {
+        const latestList = await fetchLatest();
+        storeLatestResults(chatId, latestList);
+        logger.info('Refreshed latest results', { chatId, resultCount: latestList.length });
+        
+        const messageOptions = createLatestMessage(latestList, 0);
+        await enhancedSafeEditOrSend(bot, chatId, callbackQuery.message.message_id, messageOptions, false, DELETION_TIMEOUTS.USER_INTERACTION);
+        logger.info('Updated to latest releases', { chatId });
+      },
+      '🆕 Refreshing latest releases...',
+      DELETION_TIMEOUTS.LOADING_MESSAGE
+    );
+    
   } else if (data === 'quick_search') {
     // Quick search prompt
     logger.info('Quick search callback triggered', { chatId });
-    await safeEditOrSend(bot, chatId, msg.message_id, {
+    await enhancedSafeEditOrSend(bot, chatId, callbackQuery.message.message_id, {
       text: '🔍 **Quick Search**\n\nSend me the name of any manga you want to search for!\n\nExample: `Naruto` or `One Piece`',
       parse_mode: 'Markdown',
       reply_markup: {
@@ -969,7 +1173,7 @@ ${isGroup ? `🏢 **Group Usage:**\nMention me with @${botUsername} or reply to 
       ]
     };
     
-    await safeEditOrSend(bot, chatId, msg.message_id, {
+    await enhancedSafeEditOrSend(bot, chatId, callbackQuery.message.message_id, {
       text: helpMessage,
       reply_markup: keyboard,
       parse_mode: 'Markdown'
@@ -1016,7 +1220,7 @@ ${isGroup ? `🏢 **Group Usage:** Mention me with @${botUsername} or reply to m
       ]
     };
     
-    await safeEditOrSend(bot, chatId, msg.message_id, {
+    await enhancedSafeEditOrSend(bot, chatId, callbackQuery.message.message_id, {
       text: welcomeMessage,
       reply_markup: keyboard,
       parse_mode: 'Markdown'
