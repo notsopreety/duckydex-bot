@@ -203,16 +203,67 @@ bot.onText(/\/speedtest(@\w+)?/, async (msg, match) => {
   try {
     const results = await runSpeedTest();
     const formattedResults = formatSpeedTestResults(results);
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: '🔄 Test Again', callback_data: 'speedtest' },
+          { text: '🏠 Back to Start', callback_data: 'back_to_start' }
+        ]
+      ]
+    };
     await safeEditOrSend(bot, chatId, loadingMsg.message_id, {
       text: formattedResults,
-      parse_mode: 'Markdown'
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
     }, false, DELETION_TIMEOUTS.USER_INTERACTION);
     logger.info('Sent speed test results', { chatId });
   } catch (error) {
     logger.error('Failed to run speed test', { chatId, error: error.message });
     await safeEditOrSend(bot, chatId, loadingMsg.message_id, {
       text: '❌ Failed to run speed test. Please try again later.',
-      parse_mode: 'Markdown'
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    }, false, DELETION_TIMEOUTS.ERROR_MESSAGE);
+  }
+});
+
+bot.onText(/\/ping(@\w+)?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const botUsername = await getBotUsername();
+  if (isGroupChat(msg) && match[1] && match[1] !== `@${botUsername}`) return;
+
+  logger.info('Running ping test', { chatId });
+  const loadingMsg = await sendMessageWithAutoDeletion(
+    bot, 
+    chatId, 
+    '🏓 Running ping test...', 
+    {}, 
+    DELETION_TIMEOUTS.LOADING_MESSAGE
+  );
+
+  try {
+    const results = await checkLatency();
+    const formattedResults = formatPingResults(results);
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: '🔄 Test Again', callback_data: 'ping' },
+          { text: '🏠 Back to Start', callback_data: 'back_to_start' }
+        ]
+      ]
+    };
+    await safeEditOrSend(bot, chatId, loadingMsg.message_id, {
+      text: formattedResults,
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    }, false, DELETION_TIMEOUTS.USER_INTERACTION);
+    logger.info('Sent ping test results', { chatId });
+  } catch (error) {
+    logger.error('Failed to run ping test', { chatId, error: error.message });
+    await safeEditOrSend(bot, chatId, loadingMsg.message_id, {
+      text: '❌ Failed to run ping test. Please try again later.',
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
     }, false, DELETION_TIMEOUTS.ERROR_MESSAGE);
   }
 });

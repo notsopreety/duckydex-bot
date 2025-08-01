@@ -71,43 +71,34 @@ async function testDownloadSpeed() {
 }
 
 /**
- * Test upload speed by sending data to a test endpoint
+ * Test upload speed by sending larger raw binary data to a test endpoint
  * @returns {Promise<Object>} Upload speed test results
  */
 async function testUploadSpeed() {
   return new Promise((resolve, reject) => {
-    // Create test data (1MB)
-    const testData = Buffer.alloc(1024 * 1024, 'a');
-    const testUrl = 'https://httpbin.org/post';
-    
+    // Create test data (10MB buffer)
+    const testData = Buffer.alloc(10 * 1024 * 1024, 'a'); // 10MB
     const startTime = Date.now();
-    
-    const postData = JSON.stringify({
-      data: testData.toString('base64').substring(0, 100000) // Limit to ~100KB for realistic test
-    });
 
     const options = {
-      hostname: 'httpbin.org',
+      hostname: 'httpbin.org', // Still using httpbin.org, but could be replaced with your own endpoint
       port: 443,
       path: '/post',
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(postData)
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': testData.length
       }
     };
 
     const request = https.request(options, (response) => {
       let responseData = '';
-      
-      response.on('data', (chunk) => {
-        responseData += chunk;
-      });
+      response.on('data', (chunk) => { responseData += chunk; });
 
       response.on('end', () => {
         const endTime = Date.now();
         const duration = (endTime - startTime) / 1000; // seconds
-        const uploadedBytes = Buffer.byteLength(postData);
+        const uploadedBytes = testData.length;
         const speedMbps = (uploadedBytes * 8) / (duration * 1024 * 1024); // Mbps
         const speedKBps = uploadedBytes / (duration * 1024); // KB/s
 
@@ -125,19 +116,19 @@ async function testUploadSpeed() {
       });
     });
 
-    request.on('error', (error) => {
-      reject(error);
-    });
+    request.on('error', (error) => reject(error));
 
     request.setTimeout(30000, () => {
       request.destroy();
       reject(new Error('Upload speed test timeout'));
     });
 
-    request.write(postData);
+    // Send binary data directly
+    request.write(testData);
     request.end();
   });
 }
+
 
 /**
  * Get system information
