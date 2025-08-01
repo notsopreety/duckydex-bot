@@ -17,7 +17,8 @@
     "node-fetch": "^3.3.2",
     "node-telegram-bot-api": "^0.66.0",
     "pdf-lib": "^1.17.1",
-    "sharp": "^0.34.3"
+    "sharp": "^0.34.3",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

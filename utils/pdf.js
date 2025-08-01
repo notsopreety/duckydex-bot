@@ -91,7 +91,7 @@ async function createChapterPDF(chapterId, mangaTitle = 'Unknown', chapterNumber
   // Sanitize chapterId to avoid nested directories like manga/title
   const safeId = chapterId.replace(/[\\/]/g, '_');
   const filename = `${safeId}.pdf`;
-  const outputDir = path.join(__dirname, '..', 'temp');
+  const outputDir = path.join(__dirname, 'temp');
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
   const outputPath = path.join(outputDir, filename);
 
@@ -114,14 +114,15 @@ async function createChapterPDF(chapterId, mangaTitle = 'Unknown', chapterNumber
  * Cleanup temp folder
  */
 function cleanupTempFiles() {
-  const dir = path.join(__dirname, '..', 'temp');
+  const dir = path.join(__dirname, 'temp');
   if (!fs.existsSync(dir)) return;
 
   const cutoff = Date.now() - 60 * 60 * 1000;
   fs.readdirSync(dir).forEach(file => {
     const f = path.join(dir, file);
     const stat = fs.statSync(f);
-    if (stat.mtimeMs < cutoff) {
+    
+    if (file !== '.gitkeep' && stat.mtimeMs < cutoff) {
       fs.unlinkSync(f);
       console.log(`🧹 Removed old file: ${file}`);
     }
