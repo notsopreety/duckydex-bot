@@ -122,9 +122,9 @@
 ### 📁 **Project Structure**
 ```
 duckydex-bot/
-├── 📄 main.js                 # Main bot logic and command handlers
-├── 📁 utils/                  # Utility modules
-│   ├── 📃 chapterList.js      # Chapter list handling
+├── 📄 main.js                # Main bot logic and command handlers
+├── 📁 utils/                 # Utility modules
+│   ├── 📃 chapterList.js     # Chapter list handling
 │   ├── 📃 chapters.js        # Chapter management
 │   ├── 🗑️ deletion.js        # Auto-deletion system
 │   ├── 📖 details.js         # Manga details handling
@@ -132,8 +132,10 @@ duckydex-bot/
 │   ├── 📊 latest.js          # Latest updates
 │   ├── 📊 mangalist.js       # Category browsing
 │   ├── 📟 pagination.js      # Pagination handling
+│   ├── 🏓 ping.js            # Response speed pinger
 │   ├── 📄 pdf.js             # PDF generation
-│   └── 🔍 search.js          # Search functionality
+│   ├── 🔍 search.js          # Search functionality
+│   └── 🌐 speedtest.js       # Download and upload speed test 
 ├── 📋 package.json           # Dependencies and scripts
 ├── 🔧 .env/.env.local        # Environment configuration
 └── 📚 README.md              # This file
@@ -219,7 +221,7 @@ LOG_LEVEL=info
 
 ---
 
-## 🔮 **Upcoming Features (Only When I am in mood to add them 🤣)**
+## 🔮 **Upcoming Features (Maybe When I get support on this ✨.)**
 - [ ] User Personalized Settings
 - [ ] AI Suggestion Integration
 - [ ] Activity Tracking
