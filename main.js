@@ -45,18 +45,28 @@ if (!token) {
 }
 const bot = new TelegramBot(token, { polling: true });
 
+let cachedBotUsername = null;
+
 logger.info('Bot is starting...');
+
+getBotUsername().catch(err => logger.error('Failed to initialize bot username cache', { error: err.message }));
 
 // Helper function to check if message is from group
 function isGroupChat(msg) {
   return msg.chat.type === 'group' || msg.chat.type === 'supergroup';
 }
 
-// Helper function to get bot username safely
+// Helper function to get bot username safely with caching
 async function getBotUsername() {
+  if (cachedBotUsername) {
+    return cachedBotUsername;
+  }
+  
   try {
     const botInfo = await bot.getMe();
-    return botInfo.username || 'duckdex_bot';
+    cachedBotUsername = botInfo.username || 'duckdex_bot';
+    logger.info('Cached bot username', { username: cachedBotUsername });
+    return cachedBotUsername;
   } catch (error) {
     logger.error('Failed to get bot username', { error: error.message });
     return 'duckdex_bot';
